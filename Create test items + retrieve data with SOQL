@@ -1,0 +1,54 @@
+/*
+     * This test class demonstrates how to create test data in Salesforce and retrieve it using SOQL queries.
+     * 
+     * Key features of this test class:
+     * 1. Test Data Creation:
+     *    - Creates 5 Account records with names "Test Account 1" to "Test Account 5".
+     *    - Creates 5 Contact records, all associated with the first Account.
+     *
+     * 2. SOQL Queries:
+     *    - Retrieves all Account records whose names start with "Test Account".
+     *    - Retrieves all Contact records associated with the first Account, using the relationship field `Account.Name`.
+     *
+     * 3. Assertions:
+     *    - Ensures the expected number of Account and Contact records are retrieved.
+     *    - Validates that the Contact LastName follows the naming convention "Test Contact".
+     *
+     * 4. Test Data Rollback:
+     *    - Salesforce automatically rolls back test data created during the test execution, so no manual cleanup is required.
+     *
+     * Use this test class as a reference for writing test cases involving SOQL queries and related objects.
+*/
+
+@isTest
+public class SOQLTestClass {
+    @isTest
+    static void testSOQLQueries() {
+        // Step 1: Create test data
+        List<Account> accounts = new List<Account>();
+        for (Integer i = 1; i <= 5; i++) {
+            accounts.add(new Account(Name = 'Test Account ' + i));
+        }
+        insert accounts;
+
+        List<Contact> contacts = new List<Contact>();
+        for (Integer i = 1; i <= 5; i++) {
+            contacts.add(new Contact(LastName = 'Test Contact ' + i, AccountId = accounts[0].Id));
+        }
+        insert contacts;
+
+        // Step 2: Retrieve data using SOQL
+        List<Account> retrievedAccounts = [SELECT Id, Name FROM Account WHERE Name LIKE 'Test Account%'];
+        System.assertEquals(5, retrievedAccounts.size(), 'There should be 5 test accounts retrieved.');
+
+        List<Contact> retrievedContacts = [SELECT Id, LastName, Account.Name FROM Contact WHERE Account.Name = :accounts[0].Name];
+        System.assertEquals(5, retrievedContacts.size(), 'There should be 5 contacts related to the first account retrieved.');
+
+        // Validate specific data
+        for (Contact contact : retrievedContacts) {
+            System.assert(contact.LastName.startsWith('Test Contact'), 'Contact LastName should start with "Test Contact".');
+        }
+
+        // Step 3: Cleanup (not necessary in test context as test data is rolled back)
+    }
+}
