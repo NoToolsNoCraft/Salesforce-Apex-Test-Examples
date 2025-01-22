@@ -1,0 +1,75 @@
+/*
+ * This test class demonstrates how to test basic CRUD (Create, Read, Update, Delete) operations in Salesforce.
+ * 
+ * Key Features:
+ * 1. **Create**: Inserts a new Account record.
+ * 2. **Read**: Retrieves the inserted Account using SOQL to verify its existence and values.
+ * 3. **Update**: Modifies the Account's name and verifies the update.
+ * 4. **Delete**: Deletes the Account and confirms it is no longer retrievable.
+ * 
+ * Use this test class as a reference for testing CRUD operations on standard or custom objects.
+*/
+
+
+@isTest
+public class CRUDTestClass {
+    @isTest
+    static void testCRUDOperations() {
+        // Step 1: Create
+        Account newAccount = new Account(Name = 'Test Account');
+        insert newAccount;
+        System.assertNotEquals(null, newAccount.Id, 'Account should have been created with a valid ID.');
+
+        // Step 2: Read
+        Account retrievedAccount = [SELECT Id, Name FROM Account WHERE Id = :newAccount.Id];
+        System.assertEquals('Test Account', retrievedAccount.Name, 'The Account name should match the inserted value.');
+
+        // Step 3: Update
+        retrievedAccount.Name = 'Updated Test Account';
+        update retrievedAccount;
+
+        Account updatedAccount = [SELECT Id, Name FROM Account WHERE Id = :retrievedAccount.Id];
+        System.assertEquals('Updated Test Account', updatedAccount.Name, 'The Account name should reflect the updated value.');
+
+        // Step 4: Delete
+        delete updatedAccount;
+
+        List<Account> deletedAccountCheck = [SELECT Id FROM Account WHERE Id = :updatedAccount.Id];
+        System.assertEquals(0, deletedAccountCheck.size(), 'The Account should no longer exist after deletion.');
+    }
+}
+
+
+
+
+/*
+ * If you want to test only the Create, Read, and Update steps (not Delete), 
+ * you should remove the final SOQL query and the assertion related to deletion:
+*/
+
+
+@isTest
+public class CRUDTestClass {
+    @isTest
+    static void testCRUDOperations() {
+        // Step 1: Create
+        Account newAccount = new Account(Name = 'Test Account');
+        insert newAccount;
+        System.assertNotEquals(null, newAccount.Id, 'Account should have been created with a valid ID.');
+
+        // Step 2: Read
+        Account retrievedAccount = [SELECT Id, Name FROM Account WHERE Id = :newAccount.Id];
+        System.assertEquals('Test Account', retrievedAccount.Name, 'The Account name should match the inserted value.');
+
+        // Step 3: Update
+        retrievedAccount.Name = 'Updated Test Account';
+        update retrievedAccount;
+
+        Account updatedAccount = [SELECT Id, Name FROM Account WHERE Id = :retrievedAccount.Id];
+        System.assertEquals('Updated Test Account', updatedAccount.Name, 'The Account name should reflect the updated value.');
+
+        // No deletion or deletion assertions here
+    }
+}
+
+
