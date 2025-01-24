@@ -1,0 +1,99 @@
+@isTest
+public class BasicSalesforceTest {
+
+    /*
+     * Utility Method: createTestData
+     * ------------------------------
+     * - This private method creates and inserts test data into the Salesforce database for use in the test methods.
+     * - It performs the following actions:
+     *   1. Creates two `Account` records:
+     *      - "Test Account 1"
+     *      - "Test Account 2"
+     *   2. Creates two `Contact` records, each linked to one of the `Account` records:
+     *      - "John Doe" (Email: john.doe@example.com) is associated with "Test Account 1".
+     *      - "Jane Smith" (Email: jane.smith@example.com) is associated with "Test Account 2".
+     * - The method is used as a setup step in the test methods to ensure the data is available for testing.
+     */
+
+
+    private static void createTestData() {
+        // Create test Accounts
+        List<Account> accounts = new List<Account>{
+            new Account(Name = 'Test Account 1'),
+            new Account(Name = 'Test Account 2')
+        };
+        insert accounts;
+
+        // Create test Contacts
+        List<Contact> contacts = new List<Contact>{
+            new Contact(FirstName = 'John', LastName = 'Doe', AccountId = accounts[0].Id, Email = 'john.doe@example.com'),
+            new Contact(FirstName = 'Jane', LastName = 'Smith', AccountId = accounts[1].Id, Email = 'jane.smith@example.com')
+        };
+        insert contacts;
+    }
+
+
+    /*
+     * Test Method: testPositiveScenario
+     * ---------------------------------
+     * - This test validates that data creation works as expected.
+     * - Steps:
+     *   1. Calls the `createTestData` method to insert test data into the database.
+     *   2. Queries for:
+     *      - Accounts with names starting with "Test Account".
+     *      - Contacts with email addresses ending in ".com".
+     *   3. Asserts the following:
+     *      - Two accounts are successfully created.
+     *      - The name of the first account is "Test Account 1".
+     *      - Two contacts are successfully created.
+     *      - The email of the first contact is "john.doe@example.com".
+     * - This test ensures that the data creation and relationships between objects are correct.
+     */
+
+
+    @isTest
+    static void testPositiveScenario() {
+        // Setup
+        createTestData();
+
+        // Query to validate data was created
+        List<Account> accounts = [SELECT Id, Name FROM Account WHERE Name LIKE 'Test Account%'];
+        List<Contact> contacts = [SELECT Id, FirstName, LastName, Email FROM Contact WHERE Email LIKE '%.com'];
+
+        // Positive assertions
+        System.assert(accounts.size() == 2, 'Two accounts should have been created.');
+        System.assertEquals('Test Account 1', accounts[0].Name, 'First account name should match.');
+        System.assert(contacts.size() == 2, 'Two contacts should have been created.');
+        System.assertEquals('john.doe@example.com', contacts[0].Email, 'First contact email should match.');
+    }
+
+
+    /*
+     * Test Method: testNegativeScenario
+     * ---------------------------------
+     * - This test verifies the system behavior when invalid data is inserted.
+     * - Steps:
+     *   1. Attempts to insert a `Contact` record without a `LastName`, which violates Salesforce's default validation rules.
+     *   2. Wraps the `insert` operation in a `try-catch` block to handle the expected failure.
+     *   3. Asserts that:
+     *      - A `DmlException` is thrown.
+     *      - The exception message mentions the `LastName` field is required.
+     * - This test ensures that Salesforce enforces the default validation rules and handles invalid data appropriately.
+     */
+
+
+    @isTest
+    static void testNegativeScenario() {
+        // Negative test: Attempt to insert invalid Contact (no LastName)
+        Contact invalidContact = new Contact(FirstName = 'Invalid', Email = 'invalid@example.com');
+
+        try {
+            insert invalidContact;
+            System.assert(false, 'Inserting a Contact without a LastName should fail.');
+        } catch (DmlException e) {
+            System.assert(e.getMessage().contains('LastName'), 'Error should mention LastName is required.');
+        }
+
+        // No duplicate Account.Name validation since Salesforce allows it by default
+    }
+}
